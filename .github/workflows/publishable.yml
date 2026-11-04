@@ -1,0 +1,23 @@
+name: publishable
+on:
+  workflow_call:
+    inputs:
+      scanner-ref:
+        description: Ref of therogueroadmap/.github used to check out the scanner
+        type: string
+        required: false
+        default: main
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: therogueroadmap/.github
+          ref: ${{ inputs.scanner-ref }}
+          path: .publishable-scanner
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python .publishable-scanner/scripts/check_publishable.py .
