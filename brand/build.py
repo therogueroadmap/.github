@@ -112,17 +112,20 @@ def render(svg: str, out: Path, size: int, resvg: Path) -> None:
 def compose_plugin_icon(emblem_svg: str, glyph_svg: str) -> str:
     root = ET.fromstring(emblem_svg)
     glyph = ET.fromstring(glyph_svg)
+    # BADGE_DIAMETER is the outer diameter (border included). The stroke is
+    # centred on r, so r = (D - w) / 2 keeps the outer edge at exactly D.
     diameter = CANVAS * BADGE_DIAMETER
-    r = diameter / 2
-    c = CANVAS - CANVAS * BADGE_INSET - r
+    border = CANVAS * BADGE_BORDER
+    r = (diameter - border) / 2
+    c = CANVAS - CANVAS * BADGE_INSET - diameter / 2
     ET.SubElement(root, _q("circle"), {
         "id": "badge",
         "cx": _fmt(c), "cy": _fmt(c), "r": _fmt(r),
-        "fill": ORANGE, "stroke": NAVY, "stroke-width": _fmt(CANVAS * BADGE_BORDER),
+        "fill": ORANGE, "stroke": NAVY, "stroke-width": _fmt(border),
     })
     inner = diameter * (1 - 2 * GLYPH_PADDING)
     scale = inner / 24
-    t = c - r + GLYPH_PADDING * diameter
+    t = c - inner / 2
     g = ET.SubElement(root, _q("g"), {
         "id": "glyph",
         "transform": f"translate({_fmt(t)} {_fmt(t)}) scale({_fmt(scale)})",
@@ -166,6 +169,10 @@ def compose_bleed(emblem_svg: str, *, scale: float = 1.0) -> str:
 
 _TOKEN = re.compile(r"([MmLlHhVvCcSsQqTtAaZz])|(-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?)")
 _ARITY = {"M": 2, "L": 2, "H": 1, "V": 1, "C": 6, "S": 4, "Q": 4, "T": 2, "A": 7, "Z": 0}
+# Emblem contract: only these commands are admitted. Arcs (A) and smooth/reflected
+# curves (S, T) can bulge outside their endpoints/control points, so the bbox
+# from _path_points would undercount them; they are rejected instead.
+_SUPPORTED_PATH_CMDS = frozenset("MLCQZ")
 
 
 def _path_points(d: str) -> list[tuple[float, float]]:
@@ -185,6 +192,10 @@ def _path_points(d: str) -> list[tuple[float, float]]:
         if cmd is None:
             raise ValueError("path data does not start with a command")
         up = cmd.upper()
+        if up not in _SUPPORTED_PATH_CMDS:
+            raise ValueError(
+                f"unsupported path command {cmd!r}: emblem paths may only use M L C Q Z"
+            )
         rel = cmd.islower()
         n = _ARITY[up]
         nums = []

@@ -25,8 +25,9 @@ def _by_id(root, ident):
 
 def test_plugin_icon_has_badge_geometry():
     root = ET.fromstring(B.compose_plugin_icon(EMBLEM, GLYPH))
-    r = 1024 * 0.30 / 2
-    c = 1024 - 1024 * 0.02 - r
+    # BADGE_DIAMETER is the outer diameter: stroke centred on r, outer edge = D/2.
+    r = (1024 * 0.30 - 1024 * 0.015) / 2
+    c = 1024 - 1024 * 0.02 - 1024 * 0.30 / 2
     badges = [
         el for el in root.iter("{http://www.w3.org/2000/svg}circle")
         if el.get("fill") == B.ORANGE and abs(float(el.get("r")) - r) <= 0.5
@@ -86,6 +87,24 @@ def test_bleed_scales_motif_only():
     parents = {c: p for p in root.iter() for c in p}
     assert "scale(0.5)" in parents[sun].get("transform")
     assert _by_id(root, "bg") in list(root)
+
+
+@pytest.mark.parametrize("cmd", ["A", "a", "S", "s", "T", "t", "H", "h", "V", "v"])
+def test_path_rejects_unsupported_commands(cmd):
+    d = f"M300 900 L300 500 {cmd} 40 40 0 0 1 400 500 Z"
+    with pytest.raises(ValueError, match=f"unsupported path command '{cmd}'"):
+        B._path_points(d)
+
+
+def test_youtube_scale_rejects_arc_in_motif():
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">'
+        '<circle id="sun" cx="512" cy="512" r="100"/>'
+        '<path id="figure" d="M300 900 A60 60 0 0 1 420 900 L420 300 Z"/>'
+        "</svg>"
+    )
+    with pytest.raises(ValueError, match="emblem paths may only use M L C Q Z"):
+        B.youtube_scale(svg)
 
 
 def test_youtube_motif_inside_circle():
