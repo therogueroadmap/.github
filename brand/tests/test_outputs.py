@@ -61,6 +61,19 @@ def test_bleed_outputs_opaque(rel, size):
         assert _is_navy(px), px
 
 
+@pytest.mark.parametrize("spec", B.BANNERS, ids=lambda s: s.name)
+def test_banner_outputs(spec):
+    path = OUT / spec.name
+    with Image.open(path) as img:
+        assert img.format == "PNG"
+        assert img.size == (spec.width, spec.height)
+        rgba = img.convert("RGBA")
+    assert rgba.getextrema()[3] == (255, 255)  # fully opaque
+    for px in _corners(rgba):
+        assert _is_navy(px), px
+    assert path.stat().st_size < spec.max_bytes
+
+
 # Points taken from brand/src/emblem.svg (GitHub avatar = emblem at 1024, unscaled):
 # the dark hood cavity around the cream face (the face itself is cream) and the
 # gap between hood/shoulder and the road.
