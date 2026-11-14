@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect id="bg" x="0" y="0" width="1024" height="1024" rx="184" fill="#0A1B35"/>
+  <circle id="sun" cx="700" cy="300" r="120" fill="#F7792C"/>
+  <path id="figure" fill="#FCF3E1" fill-rule="evenodd" d="M300 900 L300 500 C300 400 400 350 500 350 C600 350 700 400 700 500 L700 900 Z M450 500 l100 0 l0 100 l-100 0 Z"/>
+</svg>
