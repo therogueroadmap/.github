@@ -51,7 +51,7 @@ Plugins: `rogue-toolkit`, `rogue-workflow`, `multisession-dev-plugin`, `qa-flutt
 
 ## Banners
 
-Text on the left, emblem (sun and figure only, no rounded square) on the right, on a full-bleed navy background. The brand name is Outfit 700 in cream with an orange rule below it; then one subtitle line per language in Outfit 400, the first at full opacity and the others at 72 %.
+Text on the left, emblem (sun and figure only, no rounded square) on the right, on a full-bleed navy background. The brand name is Outfit 700 in cream with an orange rule below it; then one subtitle line per language in Outfit 400, all in cream at full opacity.
 
 The copy lives in `src/banner-text.json`: a `title` and 1 to 3 `subtitles` (`lang` + `text`), drawn in list order. The brand identity notes are the source of truth for the copy; keep both in sync by hand. To change the text, edit the JSON and rebuild.
 

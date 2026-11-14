@@ -54,8 +54,7 @@ def test_banner_composition(spec):
         assert "\n" not in t.text
     assert texts[0].get("font-weight") == "700"
     assert all(t.get("font-weight") == "400" for t in texts[1:])
-    assert texts[1].get("fill-opacity") is None
-    assert all(t.get("fill-opacity") == "0.72" for t in texts[2:])
+    assert all(t.get("fill-opacity") is None and t.get("opacity") is None for t in texts)
     assert _by_id(root, "rule").get("fill") == B.ORANGE
     fills = {el.get("fill") for el in root.iter() if el.get("fill")}
     assert fills <= PALETTE

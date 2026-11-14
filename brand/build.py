@@ -343,7 +343,6 @@ RULE_THICKNESS = 0.07    # x T
 RULE_WIDTH = 1.6         # x T
 RULE_GAP_BELOW = 0.42    # x T, from the rule to the first subtitle line box
 SUBTITLE_GAP = 0.32      # x S, between subtitle line boxes
-SECONDARY_OPACITY = 0.72  # subtitles after the first
 MAX_SUBTITLES = 3
 
 
@@ -485,15 +484,12 @@ def compose_banner(
     for ident in ("sun", "figure"):
         g.append(copy.deepcopy(_by_id(emblem, ident)))
 
-    def line(ident: str, text: str, y_top: float, size: float, weight: str,
-             opacity: float = 1.0) -> None:
+    def line(ident: str, text: str, y_top: float, size: float, weight: str) -> None:
         attrs = {
             "id": ident, "x": _fmt(spec.text_x), "y": _fmt(y_top + FONT_ASCENT * size),
             "font-family": FONT_FAMILY, "font-weight": weight,
             "font-size": _fmt(size), "fill": CREAM,
         }
-        if opacity != 1.0:
-            attrs["fill-opacity"] = _fmt(opacity)
         ET.SubElement(root, _q("text"), attrs).text = text
 
     y = top
@@ -504,9 +500,8 @@ def compose_banner(
         "width": _fmt(RULE_WIDTH * t), "height": _fmt(RULE_THICKNESS * t), "fill": ORANGE,
     })
     y += (RULE_THICKNESS + RULE_GAP_BELOW) * t
-    for i, sub in enumerate(data["subtitles"]):
-        line(f"sub-{sub['lang']}", sub["text"], y, s, "400",
-             1.0 if i == 0 else SECONDARY_OPACITY)
+    for sub in data["subtitles"]:
+        line(f"sub-{sub['lang']}", sub["text"], y, s, "400")
         y += (FONT_LINE + SUBTITLE_GAP) * s
     return _tostring(root)
 
