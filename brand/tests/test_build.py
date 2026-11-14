@@ -170,3 +170,57 @@ def test_build_with_fixtures(tmp_path):
     html = (out / "preview.html").read_text(encoding="utf-8")
     assert str(tmp_path) not in html
     assert "plugin-rogue-workflow.png" in html
+
+
+def test_path_points_rejects_numbers_after_z():
+    with pytest.raises(ValueError, match="after Z"):
+        B._path_points("M0 0 L1 1 Z 5 5")
+
+
+class _Proc:
+    returncode = 1
+    stderr = "boom"
+    stdout = ""
+
+
+def test_render_nonzero_exit_raises_resvgerror(monkeypatch, tmp_path):
+    monkeypatch.setattr(B.subprocess, "run", lambda *a, **k: _Proc())
+    with pytest.raises(B.ResvgError) as e:
+        B.render("<svg/>", tmp_path / "x.png", 32, Path("fake"))
+    assert "x.png" in str(e.value) and "boom" in str(e.value)
+
+
+def test_render_timeout_raises_resvgerror(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake(*a, **k):
+        seen.update(k)
+        raise B.subprocess.TimeoutExpired(cmd="resvg", timeout=k["timeout"])
+
+    monkeypatch.setattr(B.subprocess, "run", fake)
+    with pytest.raises(B.ResvgError) as e:
+        B.render("<svg/>", tmp_path / "x.png", 32, Path("fake"))
+    assert seen["timeout"] == 120 and "x.png" in str(e.value)
+
+
+def test_main_returns_2_on_build_resvgerror(monkeypatch, capsys):
+    monkeypatch.setattr(B, "find_resvg", lambda *a, **k: Path("fake"))
+
+    def boom(*a, **k):
+        raise B.ResvgError("resvg failed for y.png: nope")
+
+    monkeypatch.setattr(B, "build", boom)
+    assert B.main([]) == 2
+    assert "y.png" in capsys.readouterr().out
+
+
+def test_emblem_small_matches_master_paths():
+    src = Path(B.__file__).resolve().parent / "src"
+    big = ET.parse(src / "emblem.svg").getroot()
+    small = ET.parse(src / "emblem-small.svg").getroot()
+    for ident in ("sun", "figure"):
+        a, b = _by_id(big, ident), _by_id(small, ident)
+        assert a is not None and b is not None
+        assert a.get("d") == b.get("d"), ident
+        assert a.get("fill") == b.get("fill"), ident
+    assert _by_id(small, "bg").get("rx") is None

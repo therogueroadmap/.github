@@ -93,16 +93,26 @@ def find_resvg(env: Mapping[str, str] = os.environ) -> Path:
     return Path(found)
 
 
+RESVG_TIMEOUT = 120  # seconds per render call
+
+
 def render(svg: str, out: Path, size: int, resvg: Path) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         src = Path(tmp) / "in.svg"
         src.write_text(svg, encoding="utf-8")
-        proc = subprocess.run(
-            [str(resvg), "-w", str(size), "-h", str(size), str(src), str(out)],
-            capture_output=True,
-            text=True,
-        )
+        try:
+            proc = subprocess.run(
+                [str(resvg), "-w", str(size), "-h", str(size), str(src), str(out)],
+                capture_output=True,
+                text=True,
+                timeout=RESVG_TIMEOUT,
+            )
+        except subprocess.TimeoutExpired as exc:
+            raise ResvgError(
+                f"resvg timed out after {RESVG_TIMEOUT}s rendering {out.name}"
+                f" (stderr: {(exc.stderr or '').strip() if isinstance(exc.stderr, str) else ''})"
+            ) from exc
     if proc.returncode != 0:
         raise ResvgError(f"resvg failed for {out.name}: {proc.stderr.strip()}")
 
@@ -187,6 +197,8 @@ def _path_points(d: str) -> list[tuple[float, float]]:
             cmd = tokens[i][0]
             i += 1
             if cmd in "Zz":
+                if i < len(tokens) and tokens[i][1] is not None:
+                    raise ValueError("numbers after Z are not allowed in path data")
                 x, y = sx, sy
                 continue
         if cmd is None:
@@ -332,7 +344,11 @@ def main(argv: list[str] | None = None) -> int:
         print(exc)
         return 2
     here = Path(__file__).resolve().parent
-    files = build(here / "src", here / "out", resvg)
+    try:
+        files = build(here / "src", here / "out", resvg)
+    except ResvgError as exc:
+        print(exc)
+        return 2
     print(f"built {len(files)} files in {here / 'out'}")
     return 0
 

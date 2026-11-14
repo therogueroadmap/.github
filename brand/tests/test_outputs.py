@@ -86,3 +86,8 @@ def test_build_is_reproducible():
         for x, y in zip(fa, fb):
             assert x.relative_to(a) == y.relative_to(b)
             assert x.read_bytes() == y.read_bytes(), x.name
+        # versioned PNGs must match a fresh build (svg/html may get CRLF in a clone)
+        for x in fa:
+            if x.suffix == ".png":
+                rel = x.relative_to(a)
+                assert (OUT / rel).read_bytes() == x.read_bytes(), f"stale {rel}"
