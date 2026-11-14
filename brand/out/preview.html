@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Brand preview</title>
-<style>body{margin:0;font-family:sans-serif}section{padding:16px}.row{display:flex;gap:16px;align-items:center;margin:8px 0}</style>
-</head><body>
+<style>body{margin:0;font-family:sans-serif}section{padding:16px}.row{display:flex;gap:16px;align-items:center;margin:8px 0}.banner{position:relative;overflow:hidden;width:100%;margin:8px 0}.banner img{display:block;width:100%;height:auto}.guide{position:absolute;pointer-events:none;box-sizing:border-box}.safe{border:2px dashed #00e5ff}.avatar{border:2px dashed #ff3df2;border-radius:50%}body:not(.guides) .guide{display:none}</style>
+</head><body class="guides">
 <section style="background:#ffffff;color:#000000">
 <h2>Light background</h2>
 <div class="row"><img src="plugin-rogue-toolkit.png" width="256" height="256"><img src="plugin-rogue-workflow.png" width="256" height="256"><img src="plugin-multisession-dev-plugin.png" width="256" height="256"><img src="plugin-qa-flutter-plugin.png" width="256" height="256"></div>
@@ -23,5 +23,15 @@
 <img src="favicon/favicon-32.png" width="32" height="32">
 <img src="favicon/favicon-32.png" width="16" height="16">
 </div>
+</section>
+<section style="background:#0d1117;color:#ffffff">
+<h2>Banners</h2>
+<label><input type="checkbox" checked onchange="document.body.classList.toggle('guides',this.checked)"> Show guides (YouTube safe zone, X profile picture)</label>
+<h3>YouTube 2560 x 1440</h3>
+<div class="banner"><img src="banner-youtube.png"><div class="guide safe" style="left:19.8047%;top:35.3125%;width:60.3906%;height:29.375%"></div></div>
+<h3>YouTube on mobile (safe zone at 400 px)</h3>
+<div style="width:400px;height:109.4437px;overflow:hidden"><img src="banner-youtube.png" style="display:block;width:662.3545px;max-width:none;margin-left:-131.1772px;margin-top:-131.5653px"></div>
+<h3>X 1500 x 500</h3>
+<div class="banner"><img src="banner-x.png"><div class="guide avatar" style="left:2.6667%;top:66.8%;width:22.1333%;height:66.4%"></div></div>
 </section>
 </body></html>

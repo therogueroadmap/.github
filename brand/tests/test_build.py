@@ -160,6 +160,7 @@ def test_build_with_fixtures(tmp_path):
     (src / "glyphs").mkdir(parents=True)
     shutil.copy(FIX / "emblem.svg", src / "emblem.svg")
     shutil.copy(FIX / "emblem.svg", src / "emblem-small.svg")
+    shutil.copy(FIX / "banner-text.json", src / "banner-text.json")
     for p in B.PLUGINS:
         shutil.copy(FIX / "glyph.svg", src / "glyphs" / f"{p}.svg")
     out = tmp_path / "out"
@@ -170,6 +171,28 @@ def test_build_with_fixtures(tmp_path):
     html = (out / "preview.html").read_text(encoding="utf-8")
     assert str(tmp_path) not in html
     assert "plugin-rogue-workflow.png" in html
+    assert {"banner-youtube.png", "banner-x.png"} <= names
+    assert "banner-youtube.png" in html and "banner-x.png" in html
+
+
+def test_render_icon_argv_unchanged(monkeypatch, tmp_path):
+    seen = {}
+
+    class Ok:
+        returncode = 0
+        stderr = ""
+        stdout = ""
+
+    def fake(args, **k):
+        seen["args"] = args
+        return Ok()
+
+    monkeypatch.setattr(B.subprocess, "run", fake)
+    B.render("<svg/>", tmp_path / "x.png", 32, Path("resvg"))
+    assert seen["args"][:5] == ["resvg", "-w", "32", "-h", "32"]
+    B.render("<svg/>", tmp_path / "b.png", 1500, Path("resvg"), height=500, font_file=Path("f.ttf"))
+    assert seen["args"][:8] == [
+        "resvg", "--skip-system-fonts", "--use-font-file", "f.ttf", "-w", "1500", "-h", "500"]
 
 
 def test_path_points_rejects_numbers_after_z():
