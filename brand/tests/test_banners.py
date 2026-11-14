@@ -1,5 +1,4 @@
 import copy
-import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -10,7 +9,9 @@ from brand import build as B
 FIX = Path(__file__).parent / "fixtures"
 SRC = Path(B.__file__).resolve().parent / "src"
 EMBLEM = (SRC / "emblem.svg").read_text(encoding="utf-8")
-TEXT = B.load_banner_text(SRC / "banner-text.json")
+# Frozen copy for composition and fit mechanics; the real copy (SRC) may change.
+FIXED = B.load_banner_text(FIX / "banner-text.json")
+REAL = B.load_banner_text(SRC / "banner-text.json")
 PALETTE = {B.NAVY, B.ORANGE, B.CREAM}
 
 
@@ -36,7 +37,7 @@ def _measure(resvg):
 
 @pytest.mark.parametrize("spec", B.BANNERS, ids=lambda s: s.name)
 def test_banner_composition(spec):
-    root = ET.fromstring(B.compose_banner(spec, TEXT, EMBLEM, spec.title_size, spec.subtitle_size))
+    root = ET.fromstring(B.compose_banner(spec, FIXED, EMBLEM, spec.title_size, spec.subtitle_size))
     assert root.get("width") == str(spec.width) and root.get("height") == str(spec.height)
     bg = _by_id(root, "background")
     assert bg is not None and list(root)[0] is bg
@@ -101,10 +102,6 @@ def test_load_banner_text_missing(tmp_path):
         B.load_banner_text(tmp_path / "banner-text.json")
 
 
-def test_fixture_matches_source_text():
-    assert json.loads((FIX / "banner-text.json").read_text(encoding="utf-8")) == TEXT
-
-
 def test_main_returns_2_on_banner_error(monkeypatch, capsys):
     monkeypatch.setattr(B, "find_resvg", lambda *a, **k: Path("fake"))
 
@@ -121,7 +118,7 @@ def test_fit_raises_when_text_not_drawn():
         return {"title": (0, 0, 0, 0)}
 
     with pytest.raises(B.ResvgError, match="not drawn"):
-        B.fit_banner(B.X_BANNER, TEXT, EMBLEM, empty)
+        B.fit_banner(B.X_BANNER, FIXED, EMBLEM, empty)
 
 
 # --- fit (resvg) --------------------------------------------------------------
@@ -141,11 +138,13 @@ def _overlaps(box, rect):
 @pytest.mark.parametrize("spec", B.BANNERS, ids=lambda s: s.name)
 def test_banner_text_fits(spec):
     resvg = _resvg()
-    svg, title, sub = B.fit_banner(spec, TEXT, EMBLEM, _measure(resvg))
+    svg, title, sub = B.fit_banner(spec, REAL, EMBLEM, _measure(resvg))
     assert title >= spec.title_min and sub >= spec.subtitle_min
     boxes = B.query_boxes(svg, resvg, B.FONT_FILE)
     emblem = B.emblem_content_box(spec, EMBLEM)
-    for ident in B.text_ids(TEXT) + ["rule"]:
+    x0, y0, x1, y1 = emblem
+    assert _inside((x0, y0, x1 - x0, y1 - y0), spec.text_bounds)  # logo in safe zone too
+    for ident in B.text_ids(REAL) + ["rule"]:
         box = boxes[ident]
         assert box[2] > 0 and box[3] > 0, ident  # text actually drawn
         assert _inside(box, spec.text_bounds), (ident, box)
@@ -160,20 +159,20 @@ def test_banner_text_fits(spec):
 
 def test_youtube_subtitles_are_reduced():
     resvg = _resvg()
-    _, title, sub = B.fit_banner(B.YOUTUBE_BANNER, TEXT, EMBLEM, _measure(resvg))
+    _, title, sub = B.fit_banner(B.YOUTUBE_BANNER, FIXED, EMBLEM, _measure(resvg))
     assert title == B.YOUTUBE_BANNER.title_size
     assert B.YOUTUBE_BANNER.subtitle_min <= sub < B.YOUTUBE_BANNER.subtitle_size
 
 
 def _with_first_subtitle(text):
-    data = copy.deepcopy(TEXT)
+    data = copy.deepcopy(FIXED)
     data["subtitles"][0]["text"] = text
     return data
 
 
 def test_long_subtitle_shrinks_and_fits():
     resvg = _resvg()
-    data = _with_first_subtitle(TEXT["subtitles"][0]["text"] + " Y un poco más.")
+    data = _with_first_subtitle(FIXED["subtitles"][0]["text"] + " Y un poco más.")
     svg, _, sub = B.fit_banner(B.X_BANNER, data, EMBLEM, _measure(resvg))
     assert B.X_BANNER.subtitle_min <= sub < B.X_BANNER.subtitle_size
     box = B.query_boxes(svg, resvg, B.FONT_FILE)["sub-es"]
@@ -182,6 +181,6 @@ def test_long_subtitle_shrinks_and_fits():
 
 def test_too_long_subtitle_fails():
     resvg = _resvg()
-    data = _with_first_subtitle(TEXT["subtitles"][0]["text"] * 2)
+    data = _with_first_subtitle(FIXED["subtitles"][0]["text"] * 2)
     with pytest.raises(B.BannerError, match=r"'sub-es' is [\d.]+ px wide.*shorten the copy"):
         B.fit_banner(B.X_BANNER, data, EMBLEM, _measure(resvg))
