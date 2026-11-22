@@ -3,8 +3,10 @@ from pathlib import Path
 
 import pytest
 
+from brand import build as B
+
 GLYPHS_DIR = Path(__file__).resolve().parent.parent / "src" / "glyphs"
-NAMES = ("rogue-toolkit", "rogue-workflow", "multisession-dev-plugin", "qa-flutter-plugin")
+NAMES = B.PLUGINS
 GRAPHIC = {"path", "circle", "rect", "line"}
 FORBIDDEN = {"fill", "stroke", "stroke-width"}
 
@@ -26,3 +28,8 @@ def test_glyph_contract(name):
         if _local(el.tag) in GRAPHIC:
             graphic += 1
     assert graphic >= 1
+
+
+def test_every_glyph_file_is_a_plugin():
+    files = {p.stem for p in GLYPHS_DIR.glob("*.svg")}
+    assert files == set(NAMES)

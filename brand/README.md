@@ -47,7 +47,7 @@ Each plugin icon adds a round badge at the bottom right:
 | `out/banner-x.png` | 1500 x 500, navy, < 5 MB | X (Twitter) header |
 | `out/preview.html` | | Local readability check on light and dark backgrounds, plus the banners with optional guides |
 
-Plugins: `rogue-toolkit`, `rogue-workflow`, `multisession-dev-plugin`, `qa-flutter-plugin`.
+Plugins: `rogue-toolkit`, `rogue-workflow`, `multisession-dev-plugin`, `qa-flutter-plugin`, and the mods `rasenshuriken` and `sharingan` from [rogue-mods](https://github.com/therogueroadmap/rogue-mods).
 
 ## Banners
 
