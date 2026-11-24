@@ -35,6 +35,7 @@ PLUGINS = (
     "sharingan",
     "rogue-road",
     "rogue-context-bar",
+    "rogue-heroku-ops",
 )
 
 SVG_NS = "http://www.w3.org/2000/svg"
