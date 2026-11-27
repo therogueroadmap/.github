@@ -7,6 +7,8 @@ on:
         type: string
         required: false
         default: main
+permissions:
+  contents: read
 jobs:
   scan:
     runs-on: ubuntu-latest
